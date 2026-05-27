@@ -1,78 +1,80 @@
-from dados import cardapio, historico_pedidos
+import streamlit as st
 
 def realizar_pedido():
-    print("\n--- REALIZAR NOVO PEDIDO ---")
-    if not cardapio:
-        print("Não há produtos cadastrados para fazer um pedido.")
-        return
-
-    carrinho = []
+    st.header("🛒 Novo Pedido")
     
-    while True:
-        codigo_busca = int(input("\nDigite o código do produto (ou 0 para finalizar o carrinho): "))
-        if codigo_busca == 0:
-            break
-            
-        # Busca se o produto existe usando estrutura de decisão (Módulo 4)
-        produto_encontrado = None
-        for produto in cardapio:
-            if produto["codigo"] == codigo_busca:
-                produto_encontrado = produto
-                break
-                
-        if produto_encontrado:
-            quantidade = int(input(f"Quantidade de '{produto_encontrado['nome']}': "))
-            if quantidade <= 0:
-                print("Quantidade inválida.")
-                continue
-                
-            carrinho.append({"produto": produto_encontrado, "quantidade": quantidade})
-            print(f"✔️ {quantidade}x {produto_encontrado['nome']} adicionado ao carrinho.")
-        else:
-            print("❌ Produto não encontrado") # Mensagem obrigatória do PDF
-
-    if not carrinho:
-        print("Pedido cancelado (carrinho vazio).")
+    if not st.session_state.cardapio:
+        st.error("Não há produtos no cardápio para realizar um pedido.")
         return
 
-    # Processa e calcula o total do pedido
-    total_pedido = 0
-    print("\n--- RESUMO DO PEDIDO ---")
-    for item in carrinho:
-        subtotal = item["produto"]["preco"] * item["quantidade"]
-        total_pedido += subtotal
-        print(f"- {item['quantidade']}x {item['produto']['nome']} : R$ {subtotal:.2f}")
+    opcoes_produtos = {f"{p['nome']} (R$ {p['preco']:.2f})": p for p in st.session_state.cardapio}
+    produto_selecionado_texto = st.selectbox("Selecione o Produto:", list(opcoes_produtos.keys()))
+    quantidade = st.number_input("Quantidade:", min_value=1, step=1)
+    
+    if st.button("Adicionar ao Carrinho"):
+        produto_real = opcoes_produtos[produto_selecionado_texto]
+        st.session_state.carrinho_atual.append({
+            "produto": produto_real,
+            "quantidade": quantidade
+        })
+        st.toast(f"{quantidade}x {produto_real['nome']} adicionado!")
+
+    if st.session_state.carrinho_atual:
+        st.write("### Carrinho Atual")
+        total_pedido = 0
         
-    print(f"**Total a Pagar: R$ {total_pedido:.2f}**")
-    
-    # Salva no histórico geral
-    pedido_finalizado = {"itens": carrinho, "total": total_pedido}
-    historico_pedidos.append(pedido_finalizado)
-    print("🎉 Pedido registrado com sucesso!")
+        for item in st.session_state.carrinho_atual:
+            subtotal = item["produto"]["preco"] * item["quantidade"]
+            total_pedido += subtotal
+            st.write(f"- {item['quantidade']}x **{item['produto']['nome']}** — R$ {subtotal:.2f}")
+        
+        st.write(f"#### **Total: R$ {total_pedido:.2f}**")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🏁 Finalizar Pedido", type="primary"):
+                novo_pedido = {
+                    "id": len(st.session_state.historico_pedidos) + 1,
+                    "itens": list(st.session_state.carrinho_atual),
+                    "total": total_pedido
+                }
+                st.session_state.historico_pedidos.append(novo_pedido)
+                st.session_state.carrinho_atual = []
+                st.success("🎉 Pedido registrado com sucesso!")
+                st.rerun()
+        with col2:
+            if st.button("🗑️ Limpar Carrinho"):
+                st.session_state.carrinho_atual = []
+                st.warning("Carrinho esvaziado.")
+                st.rerun()
 
-def ver_pedidos():
-    print("\n--- RELATÓRIOS GERAIS DO SISTEMA ---")
-    total_vendas = len(historico_pedidos)
+def exibir_relatorios():
+    st.header("📊 Relatório Geral do Sistema")
+    
+    total_vendas = len(st.session_state.historico_pedidos)
     
     if total_vendas == 0:
-        print("Nenhum pedido foi realizado até o momento.")
+        st.info("Nenhum pedido foi realizado hoje.")
         return
 
-    faturamento_total = 0
+    faturamento_total = sum(p["total"] for p in st.session_state.historico_pedidos)
+    
     contagem_produtos = {}
-
-    # Percorre o histórico acumulando faturamento e contando itens vendidos
-    for pedido in historico_pedidos:
-        faturamento_total += pedido["total"]
+    for pedido in st.session_state.historico_pedidos:
         for item in pedido["itens"]:
-            nome = item["produto"]["nome"]
-            contagem_produtos[nome] = contagem_produtos.get(nome, 0) + item["quantidade"]
-
-    # Identifica o produto com maior volume de saída
-    produto_mais_vendido = max(contagem_produtos, key=contagem_produtos.get)
-    qtd_mais_vendida = contagem_produtos[produto_mais_vendido]
-
-    # Exibe os dados do Módulo 5 (Relatórios)
-    print(f"Quantidade total de pedidos: {total_vendas}")
-    print(f"Valor total vendido: R$ {faturamento_total:.2f}")
-    print(f"Produto mais vendido: {produto_mais_vendido} ({qtd_mais_vendida} unidades)")
+            nome_prod = item["produto"]["nome"]
+            contagem_produtos[nome_prod] = contagem_produtos.get(nome_prod, 0) + item["quantidade"]
+    
+    prod_mais_vendido = max(contagem_produtos, key=contagem_produtos.get)
+    qtd_mais_vendido = contagem_produtos[prod_mais_vendido]
+    
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total de Pedidos", total_vendas)
+    col2.metric("Faturamento Total", f"R$ {faturamento_total:.2f}")
+    col3.metric("Mais Vendido", prod_mais_vendido, f"{qtd_mais_vendido} un.")
+    
+    st.write("### 📝 Histórico de Pedidos Realizados")
+    for p in st.session_state.historico_pedidos:
+        with st.expander(f"Pedido #{p['id']} — Total: R$ {p['total']:.2f}"):
+            for item in p["itens"]:
+                st.write(f"• {item['quantidade']}x {item['produto']['nome']} (R$ {item['produto']['preco']:.2f} cada)")
