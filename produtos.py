@@ -1,14 +1,9 @@
-import sys
-import os
 import streamlit as st
 import pandas as pd
 
-# garante que a pasta atual está no mapa de caminhos do Python
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import dados 
-
 def listar_produtos():
     st.header("📋 Cardápio Atual")
+    # Lê os dados que foram inicializados de forma segura no main.py
     if not st.session_state.cardapio:
         st.warning("O cardápio está vazio.")
     else:
