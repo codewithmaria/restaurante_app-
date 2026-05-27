@@ -1,36 +1,35 @@
+import streamlit as st
 import produtos
 import pedidos
 
-def exibir_menu():
-    print("\n" + "="*30)
-    print("  Sistema de gestão para restaurantes")
-    print("="*30)
-    print("1. Cadastrar Produto")
-    print("2. Listar Produtos (Cardápio)")
-    print("3. Realizar Pedido")
-    print("4. Ver Relatórios e Vendas")
-    print("5. Sair")
-    print("="*30)
+# configura as informações iniciais da aba do navegador
+st.set_page_config(page_title="Gestão de Restaurante", page_icon="🍔", layout="centered")
 
-def main():
-    while True:
-        exibir_menu()
-        opcao = input("Escolha uma opção (1-5): ").strip()
+# Cabeçalho da aplicação web
+st.title("🍔 Sistema de Gestão de Pedidos")
+st.caption("Arquitetura Modular em Python com interface Streamlit")
+st.write("---")
 
-        if opcao == "1":
-            produtos.cadastrar_produto()
-        elif opcao == "2":
-            produtos.listar_produtos()
-        elif opcao == "3":
-            pedidos.realizar_pedido()
-        elif opcao == "4":
-            pedidos.exibir_relatorios()
-        elif opcao == "5":
-            print("\nEncerrando o sistema. Até mais!")
-            break
-        else:
-            print("❌ Opção inválida! Escolha um número de 1 a 5.")
+# menu de navegação lateral (vai substituir o loop 'while' do terminal)
+opcao = st.sidebar.radio(
+    "Navegue pelo Sistema:",
+    [
+        "1. Ver Cardápio / Listar Produtos", 
+        "2. Cadastrar Produto", 
+        "3. Realizar Pedido", 
+        "4. Relatórios de Vendas"
+    ]
+)
 
-# Garante que o programa só rode se for executado diretamente
-if __name__ == "__main__":
-    main()
+# direciona os módulos de acordo com a escolha do usuário
+if opcao == "1. Ver Cardápio / Listar Produtos":
+    produtos.listar_produtos()
+
+elif opcao == "2. Cadastrar Produto":
+    produtos.cadastrar_produto()
+
+elif opcao == "3. Realizar Pedido":
+    pedidos.realizar_pedido()
+
+elif opcao == "4. Relatórios de Vendas":
+    pedidos.exibir_relatorios()
