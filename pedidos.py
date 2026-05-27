@@ -1,89 +1,86 @@
-from dados import cardapio, historico_pedidos
+import streamlit as st
+from dados import st
 
 def realizar_pedido():
-    print("\n--- NOVO PEDIDO ---")
-    if not cardapio:
-        print("❌ Não é possível realizar pedidos. O cardápio está vazio.")
+    st.header("🛒 Novo Pedido")
+    
+    if not st.session_state.cardapio:
+        st.error("Não há produtos no cardápio para realizar um pedido.")
         return
 
-    itens_pedido = []
+    # cria um seletor com os produtos do cardápio
+    opcoes_produtos = {f"{p['nome']} (R$ {p['preco']:.2f})": p for p in st.session_state.cardapio}
+    produto_selecionado_texto = st.selectbox("Selecione o Produto:", list(opcoes_produtos.keys()))
+    quantidade = st.number_input("Quantidade:", min_value=1, step=1)
     
-    while True:
-        try:
-            codigo = int(input("Digite o código do produto (ou 0 para finalizar/cancelar): "))
-            if codigo == 0:
-                break
+    if st.button("Adicionar ao Carrinho"):
+        produto_real = opcoes_produtos[produto_selecionado_texto]
+        st.session_state.carrinho_atual.append({
+            "produto": produto_real,
+            "quantidade": quantidade
+        })
+        st.toast(f"{quantidade}x {produto_real['nome']} adicionado!")
 
-            # buscando o produto pelo código
-            produto_encontrado = None
-            for produto in cardapio:
-                if produto["codigo"] == codigo:
-                    produto_encontrado = produto
-                    break
-
-            if not produto_encontrado:
-                print("❌ Produto não encontrado. Tente novamente.")
-                continue
-
-            quantidade = int(input(f"Quantidade de '{produto_encontrado['nome']}': "))
-            if quantidade <= 0:
-                print("❌ A quantidade deve ser maior que zero.")
-                continue
-
-            # guardando o item de forma temporária
-            itens_pedido.append({
-                "produto": produto_encontrado,
-                "quantidade": quantidade
-            })
-            print(f"✔️ {quantidade}x {produto_encontrado['nome']} adicionado ao carrinho.")
-            
-        except ValueError:
-            print("❌ Entrada inválida. Digite apenas números.")
-
-    if not itens_pedido:
-        print("Pedido cancelado ou nenhum item foi adicionado.")
-        return
-
-    # calculando o total do pedido
-    total_pedido = sum(item["produto"]["preco"] * item["quantidade"] for item in itens_pedido)
-    
-    # salvando o histórico
-    novo_pedido = {
-        "id": len(historico_pedidos) + 1,
-        "itens": itens_pedido,
-        "total": total_pedido
-    }
-    historico_pedidos.append(novo_pedido)
-
-    # exibição da tela
-    print("\n--- RESUMO DO PEDIDO ---")
-    for item in itens_pedido:
-        subtotal = item["produto"]["preco"] * item["quantidade"]
-        print(f"{item['quantidade']}x {item['produto']['nome']} - R$ {subtotal:.2f}")
-    print("-" * 30)
-    print(f"TOTAL A PAGAR: R$ {total_pedido:.2f}")
-    print("------------------------")
+    # exibe o carrinho se ele tiver itens adicionados
+    if st.session_state.carrinho_atual:
+        st.write("### Carrinho Atual")
+        total_pedido = 0
+        
+        for item in st.session_state.carrinho_atual:
+            subtotal = item["produto"]["preco"] * item["quantidade"]
+            total_pedido += subtotal
+            st.write(f"- {item['quantidade']}x **{item['produto']['nome']}** — R$ {subtotal:.2f}")
+        
+        st.write(f"#### **Total: R$ {total_pedido:.2f}**")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("🏁 Finalizar Pedido", type="primary"):
+                novo_pedido = {
+                    "id": len(st.session_state.historico_pedidos) + 1,
+                    "itens": list(st.session_state.carrinho_atual),
+                    "total": total_pedido
+                }
+                st.session_state.historico_pedidos.append(novo_pedido)
+                st.session_state.carrinho_atual = []  # Limpa o carrinho
+                st.success("🎉 Pedido registrado com sucesso!")
+                st.rerun()
+        with col2:
+            if st.button("🗑️ Limpar Carrinho"):
+                st.session_state.carrinho_atual = []
+                st.warning("Carrinho esvaziado.")
+                st.rerun()
 
 def exibir_relatorios():
-    print("\n--- RELATÓRIO DO SISTEMA ---")
-    total_vendas = len(historico_pedidos)
+    st.header("📊 Relatório Geral do Sistema")
+    
+    total_vendas = len(st.session_state.historico_pedidos)
     
     if total_vendas == 0:
-        print("Nenhum pedido foi realizado até o momento.")
+        st.info("Nenhum pedido foi realizado hoje.")
         return
 
-    faturamento_total = sum(pedido["total"] for pedido in historico_pedidos)
+    faturamento_total = sum(p["total"] for p in st.session_state.historico_pedidos)
     
-    # lógica para saber qual o produto mais vendido usando um dicionário de contagem
+    # faz um cálculo do produto mais vendido por estatística 
     contagem_produtos = {}
-    for pedido in historico_pedidos:
+    for pedido in st.session_state.historico_pedidos:
         for item in pedido["itens"]:
             nome_prod = item["produto"]["nome"]
             contagem_produtos[nome_prod] = contagem_produtos.get(nome_prod, 0) + item["quantidade"]
-
-    produto_mais_vendido = max(contagem_produtos, key=contagem_produtos.get)
-    qtd_mais_vendido = contagem_produtos[produto_mais_vendido]
-
-    print(f"Quantidade total de pedidos: {total_vendas}")
-    print(f"Faturamento bruto total  : R$ {faturamento_total:.2f}")
-    print(f"Produto mais vendido     : {produto_mais_vendido} ({qtd_mais_vendido} unidades)")
+    
+    prod_mais_vendido = max(contagem_produtos, key=contagem_produtos.get)
+    qtd_mais_vendido = contagem_produtos[prod_mais_vendido]
+    
+    # metrics
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total de Pedidos", total_vendas)
+    col2.metric("Faturamento Total", f"R$ {faturamento_total:.2f}")
+    col3.metric("Mais Vendido", prod_mais_vendido, f"{qtd_mais_vendido} un.")
+    
+    # lista com o histórico detalhado
+    st.write("### 📝 Histórico de Pedidos Realizados")
+    for p in st.session_state.historico_pedidos:
+        with st.expander(f"Pedido #{p['id']} — Total: R$ {p['total']:.2f}"):
+            for item in p["itens"]:
+                st.write(f"• {item['quantidade']}x {item['produto']['nome']} (R$ {item['produto']['preco']:.2f} cada)")
