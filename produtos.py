@@ -1,42 +1,42 @@
-from dados import cardapio
+import sys
+import os
+import streamlit as st
+import pandas as pd
 
-def cadastrar_produto():
-    print("\n--- CADASTRO DE PRODUTO ---")
-    
-    try:
-        codigo = int(input("Digite o código do produto (apenas números): "))
-        
-        # ver se o código já existe
-        for produto in cardapio:
-            if produto["codigo"] == codigo:
-                print("❌ Erro: Já existe um produto com este código.")
-                return
-
-        nome = input("Digite o nome do produto: ").strip()
-        if not nome:
-            print("❌ Erro: O nome do produto não pode ser vazio.")
-            return
-
-        preco = float(input("Digite o preço do produto (Ex: 25.50): "))
-        if preco <= 0:
-            print("❌ Erro: O preço deve ser maior que zero.")
-            return
-
-        # add novo produto como dicionário
-        novo_produto = {"codigo": codigo, "nome": nome, "preco": preco}
-        cardapio.append(novo_produto)
-        print(f"✔️ Produto '{nome}' cadastrado com sucesso!")
-        
-    except ValueError:
-        print("❌ Erro: Entrada inválida. Digite números corretamente nos campos de código e preço.")
+# garante que a pasta atual está no mapa de caminhos do Python
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import dados 
 
 def listar_produtos():
-    print("\n--- CARDÁPIO ATUAL ---")
-    if not cardapio:
-        print("O cardápio está vazio.")
-        return
+    st.header("📋 Cardápio Atual")
+    if not st.session_state.cardapio:
+        st.warning("O cardápio está vazio.")
+    else:
+        df_cardapio = pd.DataFrame(st.session_state.cardapio)
+        df_cardapio.columns = ["Código", "Nome do Produto", "Preço (R$)"]
+        st.dataframe(df_cardapio.set_index("Código"), use_container_width=True)
 
-    print(f"{'Cód':<6} | {'Nome do Produto':<25} | {'Preço':<10}")
-    print("-" * 46)
-    for produto in cardapio:
-        print(f"{produto['codigo']:<6} | {produto['nome']:<25} | R$ {produto['preco']:>7.2f}")
+def cadastrar_produto():
+    st.header("✨ Cadastrar Novo Produto")
+    
+    with st.form("form_cadastro", clear_on_submit=True):
+        novo_codigo = st.number_input("Código do Produto:", min_value=1, step=1)
+        novo_nome = st.text_input("Nome do Produto:")
+        novo_preco = st.number_input("Preço (R$):", min_value=0.1, step=0.5, format="%.2f")
+        
+        botao_cadastrar = st.form_submit_button("Salvar Produto")
+        
+        if botao_cadastrar:
+            codigo_existe = any(p["codigo"] == novo_codigo for p in st.session_state.cardapio)
+            
+            if codigo_existe:
+                st.error("❌ Erro: Já existe um produto com este código.")
+            elif not novo_nome.strip():
+                st.error("❌ Erro: O nome do produto não pode ficar em branco.")
+            else:
+                st.session_state.cardapio.append({
+                    "codigo": novo_codigo,
+                    "nome": novo_nome.strip(),
+                    "preco": novo_preco
+                })
+                st.success(f"✔️ Produto '{novo_nome}' cadastrado com sucesso!")
