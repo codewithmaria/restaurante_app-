@@ -27,8 +27,8 @@ if "carrinho_atual" not in st.session_state:
 import produtos
 import pedidos
 
-st.title("🍔 Sistema de Gestão de Pedidos")
-st.caption("Arquitetura Modular em Python com interface Streamlit")
+st.title("🍔 Podrão do Erick")
+st.caption("Aqui a satisfação é garantida")
 st.write("---")
 
 opcao = st.sidebar.radio(
