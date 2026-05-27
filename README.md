@@ -18,5 +18,5 @@ O sistema foi componentizado em quatro arquivos principais, isolando as responsa
 * **Pandas** (Estruturação e exibição tabular do cardápio)
 
 ## Links
-Link do projeto []
-Link da aplicação via Streamlit []
+* **Link do Github**: []
+* **Aplicação em Nuvem**: [https://vgyusb4xk3xek4a2vofesf.streamlit.app]
