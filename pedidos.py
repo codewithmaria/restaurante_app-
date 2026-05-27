@@ -1,5 +1,9 @@
+import sys
+import os
 import streamlit as st
-from dados import st
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import dados
 
 def realizar_pedido():
     st.header("🛒 Novo Pedido")
@@ -8,7 +12,6 @@ def realizar_pedido():
         st.error("Não há produtos no cardápio para realizar um pedido.")
         return
 
-    # cria um seletor com os produtos do cardápio
     opcoes_produtos = {f"{p['nome']} (R$ {p['preco']:.2f})": p for p in st.session_state.cardapio}
     produto_selecionado_texto = st.selectbox("Selecione o Produto:", list(opcoes_produtos.keys()))
     quantidade = st.number_input("Quantidade:", min_value=1, step=1)
@@ -17,11 +20,10 @@ def realizar_pedido():
         produto_real = opcoes_produtos[produto_selecionado_texto]
         st.session_state.carrinho_atual.append({
             "produto": produto_real,
-            "quantidade": quantidade
+            "quantidade": quantity := quantidade
         })
         st.toast(f"{quantidade}x {produto_real['nome']} adicionado!")
 
-    # exibe o carrinho se ele tiver itens adicionados
     if st.session_state.carrinho_atual:
         st.write("### Carrinho Atual")
         total_pedido = 0
@@ -42,7 +44,7 @@ def realizar_pedido():
                     "total": total_pedido
                 }
                 st.session_state.historico_pedidos.append(novo_pedido)
-                st.session_state.carrinho_atual = []  # Limpa o carrinho
+                st.session_state.carrinho_atual = []
                 st.success("🎉 Pedido registrado com sucesso!")
                 st.rerun()
         with col2:
@@ -62,7 +64,6 @@ def exibir_relatorios():
 
     faturamento_total = sum(p["total"] for p in st.session_state.historico_pedidos)
     
-    # faz um cálculo do produto mais vendido por estatística 
     contagem_produtos = {}
     for pedido in st.session_state.historico_pedidos:
         for item in pedido["itens"]:
@@ -72,13 +73,11 @@ def exibir_relatorios():
     prod_mais_vendido = max(contagem_produtos, key=contagem_produtos.get)
     qtd_mais_vendido = contagem_produtos[prod_mais_vendido]
     
-    # metrics
     col1, col2, col3 = st.columns(3)
     col1.metric("Total de Pedidos", total_vendas)
     col2.metric("Faturamento Total", f"R$ {faturamento_total:.2f}")
     col3.metric("Mais Vendido", prod_mais_vendido, f"{qtd_mais_vendido} un.")
     
-    # lista com o histórico detalhado
     st.write("### 📝 Histórico de Pedidos Realizados")
     for p in st.session_state.historico_pedidos:
         with st.expander(f"Pedido #{p['id']} — Total: R$ {p['total']:.2f}"):
