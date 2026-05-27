@@ -2,7 +2,7 @@ import sys
 import os
 import streamlit as st
 
-# mapeia a pasta atual de execução
+# Configuração absoluta de caminhos locais
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import produtos
