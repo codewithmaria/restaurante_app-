@@ -2,14 +2,16 @@ import sys
 import os
 import streamlit as st
 
-# Sistema de caminhos absolutos para servidores Linux (Streamlit Cloud)
+# Configuração absoluta de caminhos para o servidor local e nuvem
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Configuração da página web
+# Configuração da página web (Deve ser o primeiro comando Streamlit)
 st.set_page_config(page_title="Gestão de Restaurante", page_icon="🍔", layout="centered")
 
-# --- INICIALIZAÇÃO DOS DADOS NA SESSÃO GLOBAL ---
-# Ao colocar aqui, o Streamlit cria o estado antes de qualquer importação secundária
+# --- CONTROLE DE SESSÃO E LOGIN ---
+if "autenticado" not in st.session_state:
+    st.session_state.autenticado = False
+
 if "cardapio" not in st.session_state:
     st.session_state.cardapio = [
         {"codigo": 1, "nome": "Hambúrguer Artesanal", "preco": 28.50},
@@ -23,32 +25,48 @@ if "historico_pedidos" not in st.session_state:
 if "carrinho_atual" not in st.session_state:
     st.session_state.carrinho_atual = []
 
-# Agora os submódulos podem ser importados com segurança
-import produtos
-import pedidos
 
-st.title("🍔 Podrão do Erick")
-st.caption("Aqui a satisfação é garantida")
-st.write("---")
+# --- FLUXO DE RENDERIZAÇÃO ---
+if not st.session_state.autenticado:
+    # Se não estiver logado, importa e mostra estritamente a tela de login
+    import login
+    login.exibir_tela_login()
+else:
+    # Se estiver logado, libera o acesso aos módulos originais do sistema
+    import produtos
+    import pedidos
 
-opcao = st.sidebar.radio(
-    "Navegue pelo Sistema:",
-    [
-        "1. Ver Cardápio / Listar Produtos", 
-        "2. Cadastrar Produto", 
-        "3. Realizar Pedido", 
-        "4. Relatórios de Vendas"
-    ]
-)
+    st.title("🍔 Podrão do Erick")
+    st.caption("Aqui a sua satisfação é garatida")
+    st.write("---")
 
-if opcao == "1. Ver Cardápio / Listar Produtos":
-    produtos.listar_produtos()
+    # Menu de navegação lateral original [cite: 33, 34]
+    opcao = st.sidebar.radio(
+        "Navegue pelo Sistema:",
+        [
+            "1. Ver Cardápio / Listar Produtos", [cite: 36]
+            "2. Cadastrar Produto", [cite: 35]
+            "3. Realizar Pedido", [cite: 37]
+            "4. Relatórios de Vendas" [cite: 38]
+        ]
+    )
+    
+    st.sidebar.write("---")
+    # Botão de Logout para encerrar a sessão com segurança 
+    if st.sidebar.button("🚪 Sair do Sistema"): [cite: 39]
+        st.session_state.autenticado = False
+        st.session_state.carrinho_atual = [] # Limpa o carrinho de segurança
+        st.rerun()
 
-elif opcao == "2. Cadastrar Produto":
-    produtos.cadastrar_produto()
+    # Direcionamento dos módulos baseados no menu [cite: 63, 64]
+    if opcao == "1. Ver Cardápio / Listar Produtos":
+        produtos.listar_produtos() [cite: 66]
 
-elif opcao == "3. Realizar Pedido":
-    pedidos.realizar_pedido()
+    elif opcao == "2. Cadastrar Produto":
+        produtos.cadastrar_produto() [cite: 65]
 
-elif opcao == "4. Relatórios de Vendas":
-    pedidos.exibir_relatorios()
+    elif opcao == "3. Realizar Pedido":
+        pedidos.realizar_pedido() [cite: 67]
+
+    elif opcao == "4. Relatórios de Vendas":
+        pedidos.exibir_relatorios()
