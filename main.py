@@ -2,13 +2,30 @@ import sys
 import os
 import streamlit as st
 
-# Configuração absoluta de caminhos locais
+# Sistema de caminhos absolutos para servidores Linux (Streamlit Cloud)
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Configuração da página web
+st.set_page_config(page_title="Gestão de Restaurante", page_icon="🍔", layout="centered")
+
+# --- INICIALIZAÇÃO DOS DADOS NA SESSÃO GLOBAL ---
+# Ao colocar aqui, o Streamlit cria o estado antes de qualquer importação secundária
+if "cardapio" not in st.session_state:
+    st.session_state.cardapio = [
+        {"codigo": 1, "nome": "Hambúrguer Artesanal", "preco": 28.50},
+        {"codigo": 2, "nome": "Batata Frita Média", "preco": 12.00},
+        {"codigo": 3, "nome": "Refrigerante Lata", "preco": 6.00},
+    ]
+
+if "historico_pedidos" not in st.session_state:
+    st.session_state.historico_pedidos = []
+
+if "carrinho_atual" not in st.session_state:
+    st.session_state.carrinho_atual = []
+
+# Agora os submódulos podem ser importados com segurança
 import produtos
 import pedidos
-
-st.set_page_config(page_title="Gestão de Restaurante", page_icon="🍔", layout="centered")
 
 st.title("🍔 Sistema de Gestão de Pedidos")
 st.caption("Arquitetura Modular em Python com interface Streamlit")
