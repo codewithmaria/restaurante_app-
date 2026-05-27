@@ -1,36 +1,54 @@
 import sys
 import os
+import streamlit as st
 
-# Configuração de caminhos para evitar problemas de diretórios no GitHub Codespaces
+# Sistema de caminhos absolutos para servidores Linux (Streamlit Cloud)
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Configuração da página web
+st.set_page_config(page_title="Gestão de Restaurante", page_icon="🍔", layout="centered")
+
+# --- INICIALIZAÇÃO DOS DADOS NA SESSÃO GLOBAL ---
+# Ao colocar aqui, o Streamlit cria o estado antes de qualquer importação secundária
+if "cardapio" not in st.session_state:
+    st.session_state.cardapio = [
+        {"codigo": 1, "nome": "Hambúrguer Artesanal", "preco": 28.50},
+        {"codigo": 2, "nome": "Batata Frita Média", "preco": 12.00},
+        {"codigo": 3, "nome": "Refrigerante Lata", "preco": 6.00},
+    ]
+
+if "historico_pedidos" not in st.session_state:
+    st.session_state.historico_pedidos = []
+
+if "carrinho_atual" not in st.session_state:
+    st.session_state.carrinho_atual = []
+
+# Agora os submódulos podem ser importados com segurança
 import produtos
 import pedidos
 
-# Menu Principal contínuo utilizando While conforme seção 5 do PDF
-while True:
-    print("\n================================")
-    print("       MENU PRINCIPAL")
-    print("================================")
-    print("5. Cadastrar produto")
-    print("6. Listar produtos")
-    print("7. Realizar pedido")
-    print("8. Ver pedidos (Relatórios)")
-    print("9. Sair")
-    print("================================")
-    
-    opcao = input("Escolha uma opção: ")
-    
-    if opcao == "5":
-        produtos.cadastrar_produto()
-    elif opcao == "6":
-        produtos.listar_produtos()
-    elif opcao == "7":
-        pedidos.realizar_pedido()
-    elif opcao == "8":
-        pedidos.ver_pedidos()
-    elif opcao == "9":
-        print("Encerrando o sistema. Até logo!")
-        break # Quebra o loop contínuo finalizando o programa
-    else:
-        print("Opção inválida! Digite um número entre 5 e 9.")
+st.title("🍔PODRÃO DO ERICK")
+st.caption("Aqui a sua satisfação é garantida")
+st.write("---")
+
+opcao = st.sidebar.radio(
+    "Navegue pelo Sistema:",
+    [
+        "1. Ver Cardápio / Listar Produtos", 
+        "2. Cadastrar Produto", 
+        "3. Realizar Pedido", 
+        "4. Relatórios de Vendas"
+    ]
+)
+
+if opcao == "1. Ver Cardápio / Listar Produtos":
+    produtos.listar_produtos()
+
+elif opcao == "2. Cadastrar Produto":
+    produtos.cadastrar_produto()
+
+elif opcao == "3. Realizar Pedido":
+    pedidos.realizar_pedido()
+
+elif opcao == "4. Relatórios de Vendas":
+    pedidos.exibir_relatorios()
