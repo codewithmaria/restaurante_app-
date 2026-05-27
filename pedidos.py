@@ -1,10 +1,4 @@
-import sys
-import os
 import streamlit as st
-
-# Sistema de ancoragem de caminho para o Linux do Streamlit Cloud
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-import dados
 
 def realizar_pedido():
     st.header("🛒 Novo Pedido")
@@ -13,7 +7,6 @@ def realizar_pedido():
         st.error("Não há produtos no cardápio para realizar um pedido.")
         return
 
-    # Criação do dicionário de seleção para o usuário
     opcoes_produtos = {f"{p['nome']} (R$ {p['preco']:.2f})": p for p in st.session_state.cardapio}
     produto_selecionado_texto = st.selectbox("Selecione o Produto:", list(opcoes_produtos.keys()))
     quantidade = st.number_input("Quantidade:", min_value=1, step=1)
